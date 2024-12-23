@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
 docker build -t tekintian/alpine-openresty:1.27.1.1 \
     -t tekintian/alpine-openresty:1.27 \
