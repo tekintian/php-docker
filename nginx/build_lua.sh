@@ -88,7 +88,9 @@ BUILD_DATE=`date +%Y-%m-%dT%H:%M:%S`
 # JAVA_TAR_SC  这个是压缩包对应的 strip-component 即去除的目录层级
 docker build -f ${WORK_DIR}/lua.Dockerfile \
     -t tekintian/alpine-nginx:${TAG} \
+    -t tekintian/alpine-nginx:${MS_VER}${TAG_EX} \
     -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${TAG} \
+    -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${MS_VER}${TAG_EX} \
     --build-arg ALPINE_VERSION="${ALPINE_VERSION}" \
     --build-arg NGINX_VERSION="${NGINX_VERSION}" \
     --build-arg RELEASE_URL="${RELEASE_URL}" \
@@ -103,17 +105,17 @@ DNGINX_VER=$(docker run --rm tekintian/alpine-nginx:${TAG} nginx -version 2>&1 |
 # nginx -version 2>&1 |awk '/NGINX /{if (NR==1){print $2}}'
 if [[ "$DNGINX_VER" =~ "${MS_VER}" ]];then
     docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
-    docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${MS_VER}${TAG_EX}
-    # docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${M_VER}${TAG_EX}
-    
+
     echo "构建成功！NGINX_VERSION: ${TAG} TAG: ${DNGINX_VER}${TAG_EX}"
     echo "docker run --rm -it tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX} nginx -version"
+
     docker push tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
     docker push tekintian/alpine-nginx:${MS_VER}${TAG_EX}
+    docker push tekintian/alpine-nginx:${TAG}
 
     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${TAG}
+    docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${MS_VER}${TAG_EX}
 
-    docker rmi tekintian/alpine-nginx:${MS_VER}${TAG_EX}
 else
   echo "获取nginx版本信息异常，构建失败！"
 fi
