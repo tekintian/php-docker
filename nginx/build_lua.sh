@@ -97,23 +97,23 @@ docker build -f ${WORK_DIR}/lua.Dockerfile \
     --build-arg BUILD_DATE="${BUILD_DATE}" \
     ${WORK_DIR}
 
-# # 运行容器并获取版本号，如果成功，则说明构建成功，否则构建失败
-# DNGINX_VER=$(docker run --rm tekintian/alpine-nginx:${TAG} nginx -version 2>&1 |cut -d'/' -f2)
-# # DNGINX_VER=$(docker run --rm tekintian/alpine-nginx:${TAG} nginx -version 2>&1 | grep "version " | cut -d'"' -f2)
-# # nginx -version 2>&1 |awk '/NGINX /{if (NR==1){print $2}}'
-# if [[ "$DNGINX_VER" =~ "${MS_VER}" ]];then
-#     docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
-#     docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${MS_VER}${TAG_EX}
-#     # docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${M_VER}${TAG_EX}
+# 运行容器并获取版本号，如果成功，则说明构建成功，否则构建失败
+DNGINX_VER=$(docker run --rm tekintian/alpine-nginx:${TAG} nginx -version 2>&1 |cut -d'/' -f2)
+# DNGINX_VER=$(docker run --rm tekintian/alpine-nginx:${TAG} nginx -version 2>&1 | grep "version " | cut -d'"' -f2)
+# nginx -version 2>&1 |awk '/NGINX /{if (NR==1){print $2}}'
+if [[ "$DNGINX_VER" =~ "${MS_VER}" ]];then
+    docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
+    docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${MS_VER}${TAG_EX}
+    # docker tag tekintian/alpine-nginx:${TAG} tekintian/alpine-nginx:${M_VER}${TAG_EX}
     
-#     echo "构建成功！NGINX_VERSION: ${TAG} TAG: ${DNGINX_VER}${TAG_EX}"
-#     echo "docker run --rm -it tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX} nginx -version"
-#     docker push tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
-#     docker push tekintian/alpine-nginx:${MS_VER}${TAG_EX}
+    echo "构建成功！NGINX_VERSION: ${TAG} TAG: ${DNGINX_VER}${TAG_EX}"
+    echo "docker run --rm -it tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX} nginx -version"
+    docker push tekintian/alpine-nginx:${DNGINX_VER}${TAG_EX}
+    docker push tekintian/alpine-nginx:${MS_VER}${TAG_EX}
 
-#     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${TAG}
+    docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/nginx:${TAG}
 
-#     docker rmi tekintian/alpine-nginx:${MS_VER}${TAG_EX}
-# else
-#   echo "获取nginx版本信息异常，构建失败！"
-# fi
+    docker rmi tekintian/alpine-nginx:${MS_VER}${TAG_EX}
+else
+  echo "获取nginx版本信息异常，构建失败！"
+fi
