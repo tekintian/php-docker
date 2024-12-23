@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # php镜像构建脚本
+# 使用方法, 先执行 update.sh 更新PHP版本和dockerfile文件, 这个执行后会看到最新的版本信息,选择需要构建的版本
+# 然后执行本脚本 , 如:  ./build.sh -v 8.4.2
+#  -v php版本  
+# -a ALPINE版本  当前支持 3.20  3.21 2个版本
+# -s PHPSHA256签名字符串 登录 https://www.php.net/downloads.php 查看
+# 
 set -Eeuo pipefail
-
-# 更新版本信息  update.sh
 
 # build.sh -v PHP版本 -a ALPINE版本 -s 文件sha256
 while getopts ":v:a:s:" opt
