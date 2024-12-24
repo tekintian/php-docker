@@ -4,7 +4,7 @@
 # @url http://github.com/tekintian/alpine-tengine
 # @tengineTENGINE_VERSION  http://tengine.taobao.org/download.html
 #
-ARG ALPINE_VERSION=3.16
+ARG ALPINE_VERSION=3.17
 FROM tekintian/alpine:${ALPINE_VERSION}
 
 ARG TENGINE_VERSION \

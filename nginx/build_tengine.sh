@@ -6,8 +6,8 @@
 # 
 # nginx lua版本构建  build_lua.sh -v Nginx版本 -a ALPINE版本 -s 文件sha256
 # 
-# 如:  build_lua.sh -v 1.26.2 -a 3.16
-# 
+# 如:  build_lua.sh -v 1.26.2 -a 3.17
+#  注意这里tengine只能使用3.17以上版本,否则无法使用
 # https://nginx.org/en/download.html
 # 
 WORK_DIR=$(cd $(dirname $0); pwd)
@@ -58,6 +58,8 @@ BUILD_DATE=`date +%Y-%m-%dT%H:%M:%S`
 
 docker build -f ${WORK_DIR}/tengine.Dockerfile -t tekintian/alpine-tengine:${TAG} \
       -t tekintian/alpine-tengine:${MS_VER}${TAG_EX} \
+      -t tekintian/alpine-tengine \
+      -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine \
       -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TAG} \
       -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${MS_VER}${TAG_EX} \
       --build-arg ALPINE_VERSION="${ALPINE_VERSION}" \
@@ -75,8 +77,10 @@ if [[ "$DNGINX_VER" =~ "${MS_VER}" ]];then
 
     echo "构建成功！TENGINE_VERSION: ${TAG} TAG: ${DNGINX_VER}${TAG_EX}"
     echo "docker run --rm -it tekintian/alpine-tengine:${DNGINX_VER}${TAG_EX} nginx -version"
+    docker push tekintian/alpine-tengine
     docker push tekintian/alpine-tengine:${TAG}
     docker push tekintian/alpine-tengine:${MS_VER}${TAG_EX}
+    docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine
     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TAG}
     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${MS_VER}${TAG_EX}
 
