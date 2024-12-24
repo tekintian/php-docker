@@ -1,5 +1,5 @@
 # http://nginx.org/
-ARG ALPINE_VERSION=3.15
+ARG ALPINE_VERSION=3.16
 FROM tekintian/alpine:${ALPINE_VERSION}
 
 ARG NGINX_VERSION \
@@ -19,7 +19,7 @@ LABEL maintainer="TekinTian <tekintian@gmail.com>" \
       build.date="${BUILD_DATE}"
 
 # http://nginx.org/en/download.html
-ENV NGINX_VERSION=${NGINX_VERSION:-"1.22.1"} \
+ENV NGINX_VERSION=${NGINX_VERSION:-"1.24.0"} \
 	# 使用环境配置，默认 Y 开启, 使用环境变量替换nginx.conf中的相关配置项目 如果自己加载配置文件，则把这个设置为 N
     USE_ENV_CONF=${USE_ENV_CONF:-"Y"} \
     NGINX_WORK_DIR=${NGINX_WORK_DIR:-"/var/www/html"} \

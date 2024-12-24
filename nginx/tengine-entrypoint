@@ -1,0 +1,159 @@
+#!/bin/sh
+# Fail hard and fast
+set -eo pipefail
+
+# 获取PHP扩展的安装目录
+NGINX_ROOT_DIR=${NGINX_ROOT_DIR:-"/etc/nginx"}
+NGINX_CONF_DIR=${NGINX_CONF_DIR:-"/etc/nginx/conf.d"}
+NGINX_HTTP_SSI=${NGINX_HTTP_SSI:-"on"}
+NGINX_HTTP_SSI_SILENT_ERRORS=${NGINX_HTTP_SSI_SILENT_ERRORS:-"on"}
+NGINX_HTTP_LOG_FORMAT=${NGINX_HTTP_LOG_FORMAT:-'$remote_addr - $remote_user [$time_iso8601] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"'}
+NGINX_HTTP_CHARSET=${NGINX_HTTP_CHARSET:-"utf-8"}
+NGINX_HTTP_SERVER_LISTEN=${NGINX_HTTP_SERVER_LISTEN:-"80"}
+NGINX_HTTP_SERVER_NAME=${NGINX_HTTP_SERVER_NAME:-"_"}
+NGINX_HTTP_SERVER_ROOT=${NGINX_HTTP_SERVER_ROOT:-"/var/www/html"}
+NGINX_HTTP_SERVER_INDEX=${NGINX_HTTP_SERVER_INDEX:-"index.php index.html index.htm"}
+NGINX_SERVER_FASTCGI_PASS=${NGINX_SERVER_FASTCGI_PASS:-""}
+
+cat >${NGINX_ROOT_DIR}/nginx.conf <<EOF
+user  www-data www-data;
+worker_processes  auto;
+
+error_log  ${NGINX_LOG_DIR}/error.log warn;
+pid        /var/run/nginx.pid;
+
+worker_rlimit_nofile 51200;
+
+events {
+  use epoll;
+  worker_connections 51200;
+  multi_accept on;
+}
+
+http {
+  include   /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  log_format  main  '${NGINX_HTTP_LOG_FORMAT}';
+
+  access_log  ${NGINX_LOG_DIR}/access.log  main;
+
+  server_names_hash_bucket_size 128;
+  client_header_buffer_size 32k;
+  large_client_header_buffers 4 32k;
+  client_max_body_size 1024m;
+  client_body_buffer_size 10m;
+  sendfile on;
+  tcp_nopush on;
+  keepalive_timeout 120;
+  server_tokens off;
+  tcp_nodelay on;
+
+  fastcgi_connect_timeout 300;
+  fastcgi_send_timeout 300;
+  fastcgi_read_timeout 300;
+  fastcgi_buffer_size 64k;
+  fastcgi_buffers 4 64k;
+  fastcgi_busy_buffers_size 128k;
+  fastcgi_temp_file_write_size 128k;
+  fastcgi_intercept_errors on;
+
+  #Gzip Compression
+  gzip on;
+  gzip_buffers 16 8k;
+  gzip_comp_level 6;
+  gzip_http_version 1.1;
+  gzip_min_length 256;
+  gzip_proxied any;
+  gzip_vary on;
+  gzip_types
+    text/xml application/xml application/atom+xml application/rss+xml application/xhtml+xml image/svg+xml
+    text/javascript application/javascript application/x-javascript
+    text/x-json application/json application/x-web-app-manifest+json
+    text/css text/plain text/x-component
+    font/opentype application/x-font-ttf application/vnd.ms-fontobject
+    image/x-icon;
+  gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+
+  #If you have a lot of static files to serve through Nginx then caching of the files' metadata (not the actual files' contents) can save some latency.
+  open_file_cache max=1000 inactive=20s;
+  open_file_cache_valid 30s;
+  open_file_cache_min_uses 2;
+  open_file_cache_errors on;
+
+  #SSI 相关
+  ssi ${NGINX_HTTP_SSI};
+  ssi_silent_errors  ${NGINX_HTTP_SSI_SILENT_ERRORS};
+  ssi_types text/shtml;
+  ssi_value_length 256;
+  
+  charset ${NGINX_HTTP_CHARSET};
+
+  include ${NGINX_CONF_DIR}/*.conf;
+}
+EOF
+
+# # php8 不支持--enable-force-cgi-redirect
+# # 在${NGINX_ROOT_DIR}/fastcgi.conf 中追加以下配置
+# cat >> ${NGINX_ROOT_DIR}/fastcgi.conf <<EOF
+# # PHP only, required if PHP was built with --enable-force-cgi-redirect
+# fastcgi_param  REDIRECT_STATUS    200;
+# EOF
+
+
+if [ ${USE_ENV_CONF} == "Y" ]; then
+ 
+    SERVER_FASTCGI_PASS_STR="#fastcgi_pass php:9000;"
+    if [ ! -z "$NGINX_SERVER_FASTCGI_PASS" ]; then
+       SERVER_FASTCGI_PASS_STR="fastcgi_pass ${NGINX_SERVER_FASTCGI_PASS};"
+    fi
+
+    cat > ${NGINX_CONF_DIR}/default.conf <<EOF
+server {
+  listen ${NGINX_HTTP_SERVER_LISTEN};
+  server_name ${NGINX_HTTP_SERVER_NAME};
+  root ${NGINX_HTTP_SERVER_ROOT};
+  index ${NGINX_HTTP_SERVER_INDEX};
+  #error page
+  #error_page 404             /404.html;
+  #error_page 500 502 503 504 /50x.html;
+
+  # for laravel rewrite
+  # location / {
+  #   try_files $uri /index.php?$args;
+  # }
+
+  #rewrite for thinkphp
+  # if (!-e $request_filename) {
+  #   rewrite "^/(.*)"  /index.php?s=/$1 last;
+  #   break;
+  # }
+
+  # 与php容器协同工作 start
+  # fastcgi_pass [连接容器的名字或则别名]:9000， 如不需要PHP支持，可删除本段
+ location ~ \.php$ {
+      fastcgi_split_path_info ^(.+\.php)(/.+)$;
+      ${SERVER_FASTCGI_PASS_STR}
+      fastcgi_index index.php;
+      include fastcgi_params;
+      fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+      fastcgi_param PATH_INFO \$fastcgi_path_info;
+  }
+  # 与php容器协同工作end
+
+  #静态资源缓存配置
+  location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|flv|mp4|ico)$ { expires 30d;  access_log off; }
+  location ~ .*\.(js|css)?$ { expires 7d; access_log off; }
+  location ~ /\.ht { deny all; }
+}
+EOF
+
+fi
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- nginx "$@"
+fi
+
+# exec su-exec www-data:www-data "$@"
+exec "$@"
