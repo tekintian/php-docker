@@ -64,7 +64,7 @@ ENV NGINX_VERSION=${NGINX_VERSION:-"1.26.2"} \
 	NGINX_ROOT_DIR=${NGINX_ROOT_DIR:-"/etc/nginx"} \
 	NGINX_CONF_DIR=${NGINX_CONF_DIR:-"/etc/nginx/conf.d"}
 
-COPY lua-entrypoint /usr/local/bin/docker-entrypoint
+# COPY lua-entrypoint /usr/local/bin/docker-entrypoint
 RUN set -eux \
 	&& mver=$(echo $ALPINE_VERSION | cut -d'.' -f2); \
 	# 如果版本小于3.15 则执行 整数比较 使用 -lt 小于； -eq 等于； -gt 大于；-le 小于等于
@@ -72,8 +72,6 @@ RUN set -eux \
 	  addgroup -g 82 -S www-data;\
 	fi; \
 	adduser -u 82 -D -S -h ${NGINX_TEMP_PATH} -s /sbin/nologin -G www-data www-data \
-	\
-	&& chmod +x /usr/local/bin/docker-entrypoint \
 	\
 	&& for path in \
 	  ${NGINX_WORK_DIR} \
@@ -114,7 +112,10 @@ RUN set -eux \
 		unzip \
 	&& cd /tmp/ \
 	\
-	# nginx download 
+	# download entrypoint and set exec perms
+	&& wget -O /usr/local/bin/docker-entrypoint https://raw.githubusercontent.com/tekintian/php-docker/refs/heads/master/nginx/lua-entrypoint \
+	&& chmod +x /usr/local/bin/docker-entrypoint \
+	# nginx install
 	&& wget -O nginx.tar.gz ${RELEASE_URL} --no-check-certificate \
 	\
 	#related module donwload

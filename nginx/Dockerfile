@@ -29,7 +29,7 @@ ENV NGINX_VERSION=${NGINX_VERSION:-"1.22.1"} \
 	NGINX_ROOT_DIR=${NGINX_ROOT_DIR:-"/etc/nginx"} \
 	NGINX_CONF_DIR=${NGINX_CONF_DIR:-"/etc/nginx/conf.d"}
 
-COPY docker-entrypoint /usr/local/bin/
+# COPY docker-entrypoint /usr/local/bin/
 RUN set -eux \
 	# ensure www-data user and group exists
 	# alpine 3.15以下版本需要手动增加组
@@ -86,6 +86,9 @@ RUN set -eux \
 		unzip \
 	&& cd /tmp/ \
 	\
+	# download entrypoint and set exec perms
+	&& wget -O /usr/local/bin/docker-entrypoint https://raw.githubusercontent.com/tekintian/php-docker/refs/heads/master/nginx/docker-entrypoint \
+	&& chmod +x /usr/local/bin/docker-entrypoint \
 	# nginx install
 	&& wget -O nginx.tar.gz ${RELEASE_URL} --no-check-certificate \
 	&& mkdir -p /usr/src/nginx \
