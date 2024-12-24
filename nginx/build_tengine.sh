@@ -67,25 +67,19 @@ docker build -f ${WORK_DIR}/tengine.Dockerfile -t tekintian/alpine-tengine:${TAG
       --build-arg BUILD_DATE="${BUILD_DATE}" \
       ${WORK_DIR}
 
-# 运行容器并获取版本号，如果成功，则说明构建成功，否则构建失败
-DNGINX_VER=$(docker run --rm tekintian/alpine-tengine:${TAG} nginx -version 2>&1 |cut -d'/' -f2)
+# # 运行容器并获取版本号，如果成功，则说明构建成功，否则构建失败
+DNGINX_VER=$(docker run --rm tekintian/alpine-tengine:${TAG} nginx -version 2>&1 |cut -d'/' -f2| awk 'NR==1{print $1}')
 # DNGINX_VER=$(docker run --rm tekintian/alpine-tengine:${TAG} nginx -version 2>&1 | grep "version " | cut -d'"' -f2)
 # nginx -version 2>&1 |awk '/NGINX /{if (NR==1){print $2}}'
 if [[ "$DNGINX_VER" =~ "${MS_VER}" ]];then
-    docker tag tekintian/alpine-tengine:${TAG} tekintian/alpine-tengine:${DNGINX_VER}${TAG_EX}
-    docker tag tekintian/alpine-tengine:${TAG} registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${DNGINX_VER}${TAG_EX}
 
     echo "构建成功！TENGINE_VERSION: ${TAG} TAG: ${DNGINX_VER}${TAG_EX}"
     echo "docker run --rm -it tekintian/alpine-tengine:${DNGINX_VER}${TAG_EX} nginx -version"
-
-    docker push tekintian/alpine-tengine:${DNGINX_VER}${TAG_EX}
-    docker push tekintian/alpine-tengine:${MS_VER}${TAG_EX}
     docker push tekintian/alpine-tengine:${TAG}
-
+    docker push tekintian/alpine-tengine:${MS_VER}${TAG_EX}
     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TAG}
     docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${MS_VER}${TAG_EX}
-    docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${DNGINX_VER}${TAG_EX}
 
 else
-  echo "获取nginx版本信息异常，构建失败！"
+  echo "获取tengine版本信息异常，构建失败！"
 fi
