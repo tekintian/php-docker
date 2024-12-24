@@ -23,8 +23,8 @@ do
     esac
 done
 
-RESTY_VERSION=${RESTY_VERSION:-"1.27.1.1"}
-ALPINE_VERSION=${ALPINE_VERSION:-"3.20"}
+RESTY_VERSION=${RESTY_VERSION:-"1.25.3.2"}
+ALPINE_VERSION=${ALPINE_VERSION:-"3.16"}
 
 # 替换版本号中的+为 -
 VERSION=$(echo ${RESTY_VERSION}|sed -e 's/+/-/g')
@@ -80,7 +80,6 @@ RESTY_CONFIG_OPTIONS="\
     --with-http_stub_status_module \
     --with-http_sub_module \
     --with-http_v2_module \
-    --with-http_v3_module \
     --with-http_xslt_module=dynamic \
     --with-ipv6 \
     --with-mail \
@@ -93,6 +92,10 @@ RESTY_CONFIG_OPTIONS="\
     --with-threads \
     "
 
+# 构建依赖包
+RESTY_ADD_PACKAGE_BUILDDEPS=" pcre-dev "
+# 运行依赖包
+RESTY_ADD_PACKAGE_RUNDEPS=" pcre "
 
 docker build -t tekintian/alpine-openresty:${TAG} \
     -t tekintian/alpine-openresty:${MS_VER} \
@@ -112,6 +115,8 @@ docker build -t tekintian/alpine-openresty:${TAG} \
     --build-arg RESTY_PCRE_SHA256="${RESTY_PCRE_SHA256}" \
     --build-arg RESTY_PCRE_BUILD_OPTIONS="${RESTY_PCRE_BUILD_OPTIONS}" \
     --build-arg RESTY_CONFIG_OPTIONS="${RESTY_CONFIG_OPTIONS}" \
+    --build-arg RESTY_ADD_PACKAGE_BUILDDEPS="${RESTY_ADD_PACKAGE_BUILDDEPS}" \
+    --build-arg RESTY_ADD_PACKAGE_RUNDEPS="${RESTY_ADD_PACKAGE_RUNDEPS}" \
     --build-arg BUILD_DATE="${BUILD_DATE}" \
     -f Dockerfile  ${WORK_DIR}
 
