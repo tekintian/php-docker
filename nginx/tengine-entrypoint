@@ -100,8 +100,8 @@ EOF
 # fastcgi_param  REDIRECT_STATUS    200;
 # EOF
 
-
-if [ ${USE_ENV_CONF} == "Y" ]; then
+# 使用环境变量配置nginx 配置文件 同时文件不存在时，使用环境变量配置默认的nginx 配置文件
+if [[ ${USE_ENV_CONF} == "Y" && ! -f ${NGINX_CONF_DIR}/default.conf ]]; then
  
     SERVER_FASTCGI_PASS_STR="#fastcgi_pass php:9000;"
     if [ ! -z "$NGINX_SERVER_FASTCGI_PASS" ]; then
