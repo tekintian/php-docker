@@ -69,7 +69,7 @@ docker build --no-cache \
     -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TENGINE_VERSION}-ts \
     images/tengine/rootfs/
 
-# 构建 tengine-ingress镜像
+# 以tengine镜像为基础, 构建 tengine-ingress镜像
 docker build --no-cache \
     --build-arg BASE_IMAGE="tekintian/alpine-tengine:${TENGINE_VERSION}" \
     --build-arg VERSION="${TENGINE_INGRESS_VERSION}" \
