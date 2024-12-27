@@ -47,10 +47,18 @@ MS_VER=$(echo ${TENGINE_INGRESS_VERSION}|cut -d'.' -f -2)
 # 构建时间 2024-12-23T23:43:03
 BUILD_DATE=`date +%Y-%m-%dT%H:%M:%S`
 
-# 下载ti发行包
-wget -O tengine-ingress.tar.gz https://codeload.github.com/alibaba/tengine-ingress/tar.gz/refs/tags/Tengine-Ingress-v${TENGINE_INGRESS_VERSION}
-mkdir src
+if [ ! -f "tengine-ingress.tar.gz" ]; then
+    # 下载 tengine-ingress.tar.gz 发行包
+    wget -O tengine-ingress.tar.gz https://codeload.github.com/alibaba/tengine-ingress/tar.gz/refs/tags/Tengine-Ingress-v${TENGINE_INGRESS_VERSION}
+fi
+
+# 如果src目录不存在，则创建
+if [! -d "src" ]; then
+    mkdir src
+fi
+# 解压 tengine-ingress.tar.gz 发行包
 tar -C src -zxvf tengine-ingress.tar.gz --strip-components=1
+# 进入src目录
 cd ${WORK_DIR}/src
 
 # TENGINE镜像构建 这个镜像包含 modsecurity  luajit2等
@@ -61,15 +69,13 @@ docker build --no-cache \
     -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TENGINE_VERSION}-ts \
     images/tengine/rootfs/
 
-
 # 构建 tengine-ingress镜像
 docker build --no-cache \
-    --build-arg BASE_IMAGE="tekintian/alpine-tengine:${VERSION}" \
+    --build-arg BASE_IMAGE="tekintian/alpine-tengine:${TENGINE_VERSION}" \
     --build-arg VERSION="${TENGINE_INGRESS_VERSION}" \
     -t tekintian/tengine-ingress:${TENGINE_INGRESS_VERSION} \
     -t registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TENGINE_INGRESS_VERSION}-ingress \
     -f build/Dockerfile  .
-
 
 # 推送镜像
 docker push tekintian/alpine-tengine:${TENGINE_VERSION}
@@ -77,7 +83,9 @@ docker push tekintian/tengine-ingress:${TENGINE_INGRESS_VERSION}
 docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TENGINE_INGRESS_VERSION}-ingress
 docker push registry.cn-hangzhou.aliyuncs.com/alpine-docker/tengine:${TENGINE_VERSION}-ts
 
-# 清理文件
+# 构建完成 返回工作目录
 cd ${WORK_DIR}
-# rm -rf tengine-ingress.tar.gz
-# rm -rf src
+
+# 清理文件
+rm -rf tengine-ingress.tar.gz
+rm -rf src
